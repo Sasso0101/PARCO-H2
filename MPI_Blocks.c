@@ -1,3 +1,4 @@
+#include <math.h>
 #include <mpi.h>
 #include <stdio.h>
 #include <string.h>
@@ -8,39 +9,47 @@
 #define INNER_BLOCK_SIZE 16
 
 void transpose(int N, float** mat, float** mat_t, int rank, int size) {
-  int outer_block_length = N / size;
+  int outer_block_length = N / (int) sqrt(size);
   int outer_block_size = outer_block_length * outer_block_length;
   float **mat_local;
+  float **mat_local_t;
   init_matrix(outer_block_length, outer_block_length, &mat_local);
+  init_matrix(outer_block_length, outer_block_length, &mat_local_t);
   int *disp, *count;
-  MPI_Datatype send_type;
+  MPI_Datatype send_type, resized_type;
 
+  int array_elements[] = {N, N};
+  int array_of_subsizes[] = {outer_block_length, outer_block_length};
+  int array_of_starts[] = {0, 0};
+  MPI_Type_create_subarray(2, array_elements, array_of_subsizes, array_of_starts, MPI_ORDER_C, MPI_FLOAT, &send_type);
+  MPI_Type_commit(&send_type);
+  MPI_Type_create_resized(send_type, 0, outer_block_length*sizeof(float), &resized_type);
+  MPI_Type_commit(&resized_type);
   if (rank == 0) {
-    if (N % size != 0) {
-      printf("Matrix size must be divisible by the number of processes\n");
+    if (outer_block_length * (int) sqrt(size) != N) {
+      printf("Number of threads must be a square!\n");
       return;
     }
-    int array_elements[] = {N, N};
-    int array_of_subsizes[] = {outer_block_length, outer_block_length};
-    int array_of_starts[] = {0, 0};
-    MPI_Type_create_subarray(2, array_elements, array_of_subsizes, array_of_starts, MPI_ORDER_C, MPI_FLOAT, &send_type);
-    MPI_Type_commit(&send_type);
+    if (N % outer_block_length != 0) {
+      printf("Matrix size must be divisible by sqrt(size)!\n");
+      return;
+    }
 
     disp = calloc(size,sizeof(int));
     count = calloc(size,sizeof(int));
     for (int i = 0; i < size; ++i) {
       disp[i] = 
-        ((i * outer_block_length) % N) + 
-        ((i * outer_block_length) / N) * outer_block_length * N;
+        ((i) % (N / outer_block_length)) + 
+        ((i * outer_block_length) / N) * N;
       count[i] = 1;
     }
-    MPI_Scatterv(mat[0], count, disp, send_type, mat_local[0], outer_block_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(mat[0], count, disp, resized_type, mat_local[0], outer_block_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
   } else {
     MPI_Scatterv(NULL, NULL, NULL, MPI_FLOAT, mat_local[0], outer_block_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
   }
 
   // Transpose the local block by smaller blocks
-  for (int i = 0; i < outer_block_length; i += INNER_BLOCK_SIZE) {
+  /*for (int i = 0; i < outer_block_length; i += INNER_BLOCK_SIZE) {
     for (int j = 0; j < outer_block_length; j += INNER_BLOCK_SIZE) {
       int iend = (i + INNER_BLOCK_SIZE < outer_block_length) ? i + INNER_BLOCK_SIZE : outer_block_length;
       int jend = (j + INNER_BLOCK_SIZE < outer_block_length) ? j + INNER_BLOCK_SIZE : outer_block_length;
@@ -50,17 +59,25 @@ void transpose(int N, float** mat, float** mat_t, int rank, int size) {
         }
       }
     }
+  }*/
+
+  // Transpose local block
+  for (int i = 0; i < outer_block_length; i++) {
+    for (int j = 0; j < outer_block_length; j++) {
+      mat_local_t[j][i] = mat_local[i][j];
+    }
   }
   
   if (rank == 0) {
     for (int i = 0; i < size; ++i) {
       disp[i] = 
-        ((i * outer_block_length) % N) * N + 
-        ((i * outer_block_length) / N) * outer_block_length;
+        ((i) % (N / outer_block_length)) * N + 
+        ((i * outer_block_length) / N);
+      count[i] = 1;
     }
-    MPI_Gatherv(mat_local[0], outer_block_size, MPI_FLOAT, mat_t[0], count, disp, send_type, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(mat_local_t[0], outer_block_size, MPI_FLOAT, mat_t[0], count, disp, resized_type, 0, MPI_COMM_WORLD);
   } else {
-    MPI_Gatherv(mat_local[0], outer_block_size, MPI_FLOAT, NULL, 0, NULL, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(mat_local_t[0], outer_block_size, MPI_FLOAT, NULL, 0, NULL, MPI_FLOAT, 0, MPI_COMM_WORLD);
   }
 }
 
