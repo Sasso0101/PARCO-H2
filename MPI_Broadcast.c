@@ -10,12 +10,6 @@ void transpose(int N, float** mat, float** mat_t, int rank, int size) {
   int start = rank * N / size + (rank < remainder ? rank : remainder);
   int end = start + N / size + (rank < remainder ? 1 : 0);
   
-  for (int i = start; i < end; i++) {
-    for (int j = 0; j < N; ++j) {
-      mat_t[j][i] = mat[i][j];
-    }
-  }
-  
   MPI_Datatype block_type, new_block_type;
   MPI_Type_vector(N, 1, N, MPI_FLOAT, &block_type);
   MPI_Type_commit(&block_type);
@@ -31,9 +25,9 @@ void transpose(int N, float** mat, float** mat_t, int rank, int size) {
       count[i] = N / size + (i < remainder ? 1 : 0);
     }
 
-    MPI_Gatherv(MPI_IN_PLACE, end-start, new_block_type, mat_t[0], count, disp, new_block_type, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(mat[0], (end-start)*N, MPI_FLOAT, mat_t[0], count, disp, new_block_type, 0, MPI_COMM_WORLD);
   } else {
-    MPI_Gatherv(&(mat_t[0][start]), end-start, new_block_type, NULL, 0, NULL, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(mat[start], (end-start)*N, MPI_FLOAT, NULL, 0, NULL, MPI_FLOAT, 0, MPI_COMM_WORLD);
   }
   MPI_Type_free(&block_type);
   MPI_Type_free(&new_block_type);
