@@ -35,6 +35,7 @@ void print_matrix(int N, float **mat) {
     printf("%f ", *((*mat) + i));
     if ((i+1) % N == 0) printf("\n");
   }
+  printf("\n");
 }
 
 /// Initialize a matrix of size n x m. The matrix is stored in a contiguous block of memory.
