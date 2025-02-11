@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <omp.h>
+#include "utils.h"
 
 #define BLOCK_SIZE 64
 
@@ -60,56 +61,38 @@ void divide_transpose(float **m, float **t, int size) {
 }
 
 int main(int argc, char **argv) {
-    int size = 4096;
-    int verbose = 0;
-    if (argc > 1) {
-        size = strtol(argv[1], NULL, 10);
-    }
-    if (argc > 2) {
-        verbose = 1;
-    }
+    bool check, verbose;
+    int N;
 
+    parse_args(argc, argv, &N, &check, &verbose);
+    srand(time(NULL));
+    
     // Allocate memory for the matrices
-    float **m = (float **)malloc(size * sizeof(float *));
-    float **t = (float **)malloc(size * sizeof(float *));
-    for (int i = 0; i < size; i++) {
-        m[i] = (float *)malloc(size * sizeof(float));
-        t[i] = (float *)malloc(size * sizeof(float));
+    float **m = (float **)malloc(N * sizeof(float *));
+    float **t = (float **)malloc(N * sizeof(float *));
+    for (int i = 0; i < N; i++) {
+        m[i] = (float *)malloc(N * sizeof(float));
+        t[i] = (float *)malloc(N * sizeof(float));
     }
     
-    init_rand(m, size);
+    init_rand(m, N);
+    
     double start, end;
-    int is_sym = 0;
-    // Check if the matrix is symmetric
-    start = omp_get_wtime();
-    is_sym = check_sym(m, size);
-    end = omp_get_wtime();
-
-    // Print wall time
-    if (verbose) {
-        printf("Time taken for the symmetry check: %.9fs\n", end-start);
-    } else {
-        // Print some output to stderr to avoid the compiler optimizing the check away
-        fprintf(stderr, "%d", is_sym);
-        printf("%.9f,", end-start);
-    }
 
     // Compute blocked transpose
     start = omp_get_wtime();
-    divide_transpose(m, t, size);
+    divide_transpose(m, t, N);
     end = omp_get_wtime();
 
     // Print wall time
     if (verbose) {
         printf("Time taken for matrix transposition: %.9fs\n", end-start);
         printf("- Input matrix -\n");
-        print_mat(m, size);
+        print_mat(m, N);
         printf("- Transposed matrix -\n");
-        print_mat(t, size);
+        print_mat(t, N);
     } else {
-        // Print some output to stderr to avoid the compiler optimizing the transpose away
-        fprintf(stderr, "%f", t[size-1][size-1]);
-        printf("%.9f\n", end-start);
+        printf("threads: %d, transpose_time: %f\n", omp_get_max_threads(), end-start);
     }
     return 0;
 }

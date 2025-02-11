@@ -7,7 +7,7 @@
 
 void transpose(int N, float** mat, float** mat_t, int rank, int size) {
   int remainder = N % size;
-  int start = rank * N / size + (rank < remainder ? rank : remainder);
+  int start = rank * (N / size) + (rank < remainder ? rank : remainder);
   int end = start + N / size + (rank < remainder ? 1 : 0);
   
   float **mat_local;
@@ -21,7 +21,7 @@ void transpose(int N, float** mat, float** mat_t, int rank, int size) {
     disp = calloc(size,sizeof(int));
     count = calloc(size,sizeof(int));
     for (int i = 0; i < size; ++i) {
-      disp[i] = i * N / size + (i < remainder ? i : remainder);
+      disp[i] = i * (N / size) + (i < remainder ? i : remainder);
       count[i] = N / size + (i < remainder ? 1 : 0);
     }
 
@@ -51,22 +51,11 @@ int main(int argc, char *argv[]) {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   
   float **mat, **mat_t;
-  bool check = false;
-  bool verbose = false;
+  bool check, verbose;
   Timer transpose_timer;
+  int N;
 
-  if (argc < 2 || argc >= 5) {
-    printf("Usage: %s <matrix_dim> [<check_correctness>] [<verbose>]\n", argv[0]);
-    return 1;
-  } else {
-    if (argc >= 3 && strcmp(argv[2], "check") == 0) {
-      check = true;
-    }
-    if (argc >= 4 && strcmp(argv[3], "verbose") == 0) {
-      verbose = true;
-    }
-  }
-  int N = atoi(argv[1]);
+  parse_args(argc, argv, &N, &check, &verbose);
   srand(time(NULL));
   
   init_matrix(N, N, &mat);

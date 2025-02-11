@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct {
   double start;
@@ -60,6 +61,23 @@ void fill_sym_matrix(int N, float*** mat) {
     for (int j = 0; j <= i; j++) {
       (*mat)[i][j] = rand() / (float) RAND_MAX;
       (*mat)[j][i] = (*mat)[i][j];
+    }
+  }
+}
+
+void parse_args(int argc, char **argv, int *N, bool *check, bool *verbose) {
+  if (argc < 2 || argc >= 5) {
+    printf("Usage: %s <matrix_dim> [<check_correctness>] [<verbose>]\n", argv[0]);
+    exit(1);
+  } else {
+    *check = false;
+    *verbose = false;
+    *N = atoi(argv[1]);
+    if (argc >= 3 && strcmp(argv[2], "check") == 0) {
+      *check = true;
+    }
+    if (argc >= 4 && strcmp(argv[3], "verbose") == 0) {
+      *verbose = true;
     }
   }
 }
