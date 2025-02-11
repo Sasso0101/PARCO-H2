@@ -27,7 +27,7 @@ Then, submit the `main.pbs` file to the cluster using the following command:
 ```bash
 qsub -q short_cpuQ -v "PATH_TO_DIRECTORY=/home/<username>/<path_to_project_directory>" /home/<username>/<path_to_project_directory>/main.pbs
 ```
-Where `<username>` has to be replaced with the actual username and `<path_to_project_directory>` has to be replaced with the complete path from the home directory to the project directory, if the repo has been downloaded directly from Github it should end with `PARCO-H2`.
+Where `<username>` has to be replaced with the actual username and `<path_to_project_directory>` has to be replaced with the complete path from the home directory to the project directory. If the repo has been downloaded directly from Github it should just be `PARCO-H2`.
 
 To allow a quick completion of the script, each implementation will be run only once by default. The number of runs can be changed by setting the RUNS environment variable as follows:
 ```bash
@@ -40,7 +40,7 @@ export PATH_TO_DIRECTORY=/home/<username>/<path_to_project_directory>
 ```
 
 ### Expected output
-The script should take approximately two minutes to complete. The standard output is written to the `stdout.o` file in the project directory. The script will print the runtimes of each version inside files in the `results/` directory, where the filename is in the following format:
+The script should take approximately two to three minutes to complete. The standard output is written to the `stdout.o` file in the project directory. The script will print the runtimes of each version inside files in the `results/` directory, where the filename is in the following format:
 ```
 |- <implementation_name>_<num_threads>_<matrix_size>.txt
 ```
