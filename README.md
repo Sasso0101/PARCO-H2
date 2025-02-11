@@ -3,7 +3,20 @@ Student: Salvatore Andaloro (email: [salvatore.andaloro@studenti.unitn.it](mailt
 
 The repository contains the following files:
 ```
-|- main.pbs           : PBS script that runs all the implementations
+|- README.md             : this file
+|- main.pbs              : PBS script that runs all the implementations
+|- plots.ipynb           : Jupyter notebook that generates the plots
+|- src/                  : source code folder
+|   |- Sequential.c      : sequential implementation
+|   |- OpenMP.c          : OpenMP implementation (blocked)
+|   |- MPI_Symm.c        : MPI implementation (symmetry checking)
+|   |- MPI_Broadcast.c   : MPI implementation (broadcast)
+|   |- MPI_Scatter.c     : MPI implementation (scatter)
+|   |- MPI_Blocked.c     : MPI implementation (blocked)
+|   |- MPI_Blocked_32.c  : MPI implementation (blocked with 32x32 blocks)
+|   |- MPI_Blocked_64.c  : MPI implementation (blocked with 64x64 blocks)
+|   |- MPI_Blocked_128.c : MPI implementation (blocked with 128x128 blocks)
+|   |- utils.h           : utility functions
 ```
 ### Reproducibility instructions
 Clone this repository to a local folder:
@@ -21,9 +34,16 @@ To allow a quick completion of the script, each implementation will be run only 
 qsub -q short_cpuQ -v PATH_TO_DIRECTORY=/home/<username>/<path_to_project_directory>,RUNS=<number_of_runs> /home/<username>/<path_to_project_directory>/main.pbs
 ```
 
-Alternatively, the PBS file can be run as a regular bash script on any Linux machine with `gcc-9.1.0` and the openmp library installed and by specifying the `PATH_TO_DIRECTORY` environment variable using
+Alternatively, the PBS file can be run as a regular bash script on any Linux machine with installed `gcc-9.1.0`, the openmp library and `mpich-3.2.1`. The `PATH_TO_DIRECTORY` environment variable can be specified using
 ```bash
 export PATH_TO_DIRECTORY=/home/<username>/<path_to_project_directory>
 ```
 
 ### Expected output
+The script will generate files in the `results/` directory with the following format:
+```
+|- <implementation_name>_<num_threads>_<matrix_size>.txt
+```
+The Jupyter notebook `plots.ipynb` can be used to generate the plots from the results. The Jupiter notebook requires `matplotlib`, `numpy`, `pprint` and `scienceplots` libraries to be installed.
+
+For easy reference the uploaded notebook already contains the generated plots.
