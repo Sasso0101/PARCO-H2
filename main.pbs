@@ -54,15 +54,15 @@ declare -A STRONG_SCALING_SIZES=([1]=8 [2]=11 [4]=16 [8]=22 [16]=32 [32]=45 [64]
 
 printf "Checking correctness of broadcast\n"
 mpirun -np 1 ./bin/MPI_Broadcast 3 check verbose
-printf "-----------------------------------\n\n"
+printf -- "-----------------------------------\n\n"
 
 printf "Checking correctness of blocked version\n"
 mpirun -np 1 ./bin/MPI_Blocks 3 check verbose
-printf "-----------------------------------\n\n"
+printf -- "-----------------------------------\n\n"
 
 printf "Checking correctness of scatter version\n"
 mpirun -np 1 ./bin/MPI_Scatter 3 check verbose
-printf "-----------------------------------\n\n"
+printf -- "-----------------------------------\n\n"
 
 for size in ${SIZES[@]}; do
   # if [ $size -le 512 ]; then
